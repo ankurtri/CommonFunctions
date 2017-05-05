@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+
 def create_EDD(Dataframe):
     """
     It expects a pandas.DataFrame as input and outputs EDD in dataframe format as well
