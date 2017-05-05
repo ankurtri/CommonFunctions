@@ -27,7 +27,7 @@ def create_EDD(Dataframe):
             for col in RelevantCols:
                 if Dataframe[col].var()==0:
                    Num_Stats.loc[col,'Zero_Var'] = 1
-                   print "came for zero var", col
+                   #print "came for zero var", col
             
             
             Numeric_col_Order = [i for i in Num_Stats.columns]
@@ -68,7 +68,7 @@ def create_EDD(Dataframe):
             EDD = pd.concat([EDD,Object_Stats],axis=0)
                 
         else :
-            print "No handle avaiable for datatype= ",datatype
+            print ("No handle avaiable for datatype= ",datatype)
     
     
     EDD.index.name="Variable"
