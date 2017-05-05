@@ -18,7 +18,7 @@ def create_EDD(Dataframe):
     
     for datatype in Unique_dataTypes:
         RelevantCols = [i for i in Data_types[Data_types==datatype].index]
-        print "Handling" ,len(RelevantCols),"variables of",datatype,"type"
+        #print "Handling" ,len(RelevantCols),"variables of",datatype,"type"
         if datatype in [float,int,'int64']:
             # Check_Min_Max
             Num_Stats = Dataframe[RelevantCols].describe().T
