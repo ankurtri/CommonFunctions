@@ -1,0 +1,40 @@
+class cdf_class:
+    __N_Bins=100
+    __cols_bins={}
+    def __init__(self,N_bins=10000):   
+        self.__N_Bins = N_bins
+        return
+    def get_Nbins(self):
+        return self.__N_Bins
+    def get_cols_data(self):
+        return self.__cols_bins
+    
+    def set_cdf(self,COLNAME,x_array):
+        if x_array.dtype in [np.dtype('int64'),np.dtype('float64')]:
+            pass
+        else:
+            print("dtype for the column ",COLNAME," is not numeric :",x_array.dtype)
+            return
+        try:
+            x_array = np.array(x_array)
+            x_array = x_array[~np.isnan(x_array)]
+            hist,bin_edges =np.histogram(x_array,bins=self.__N_Bins)
+        except Exception as e:
+            print(e)
+            return
+        self.__cols_bins[COLNAME]= [np.cumsum(hist)/sum(hist),bin_edges]
+        return True
+    
+    def get_cdf(self,COLNAME,x_array):        
+        if x_array.dtype in [np.dtype('int64'),np.dtype('float64')]:
+            pass
+        else:
+            print("dtype for the column ",COLNAME," is not numeric :",x_array.dtype)
+            return
+        try:
+            hist,bin_edges = self.__cols_bins.get(COLNAME)   
+        except Exception as e:
+            print(e)
+            return
+        out_array = np.array([hist.item(min(np.sum(i>bin_edges),self.__N_Bins-1)) if i==i else hist.item(int(self.__N_Bins*0.5))  for i in x_array ])
+        return out_array
