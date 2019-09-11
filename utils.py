@@ -23,7 +23,7 @@ def get_model_variable_sensitivity(model,inData,column,colLocalizedValue=None):
     inData = inData.copy()
     valCnt = inData[column].value_counts().shape[0]
     #Handling the case where we have only two unique values for the column of interest
-    if valCnt in [2,3]:
+    if valCnt in [2,3,4,5]:
         minVal = inData[column].min()
         maxVal = inData[column].max()
         inData = inData[inData[column]==minVal]
