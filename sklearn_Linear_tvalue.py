@@ -21,13 +21,13 @@ def  coef_PValues(model,X_train):
   p_values = np.round(p_values,3)
   params = np.round(params,4)
 
-  myDF3 = pd.DataFrame()
-  myDF3["Coefficients"],myDF3["Standard Errors"],myDF3["t values"],myDF3["Probabilites"] = [params,sd_b,ts_b,p_values]
+  paramDF = pd.DataFrame()
+  paramDF["Coefficients"],paramDF["Standard Errors"],paramDF["t values"],paramDF["Probabilites"] = [params,sd_b,ts_b,p_values]
 
   indices = ['intercept'] + [i for i in X_train.columns]
-  myDF3.index = indices
-  myDF3.index.name = 'Variable'
-  print(myDF3)
+  paramDF.index = indices
+  paramDF.index.name = 'Variable'
+  print(paramDF)
 
-  myDF3.to_csv("coef_val.csv")
-  return myDF3.copy()
+  paramDF.to_csv("coef_val.csv")
+  return paramDF.copy()
