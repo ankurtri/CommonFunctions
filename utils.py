@@ -1,3 +1,12 @@
+from retrying import retry
+import numpy as np
+import pandas as pd
+import datetime
+import pyodbc
+import smtplib
+import socks
+from email.mime.multipart import MIMEMultipart
+
 def mean_absolute_percentage_error(y_true, y_pred): 
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
@@ -144,3 +153,54 @@ def milliseconds_to_datetime(milliseconds):
     datetimeObj = datetime.datetime(1970,1,1) + datetime.timedelta(seconds=seconds)
     #2019-08-02 18:11:46
     return datetimeObj.strftime("%Y-%m-%d %H:%M:%S")
+
+def convert_df_to_html(df):
+    return str(df.to_html(col_space=8,justify="center",na_rep = "", float_format=lambda x: "%.2f"%x))
+
+@retry(stop_max_attempt_number=5,wait_random_min=2000, wait_random_max=4000)
+def send_email(smtp_host = 'smtp.gmail.com',
+               smtp_port=465,
+               proxy_host=None,
+               proxy_port=None,
+               From=None,
+               From_password=None,
+               To = None,
+               CC = None,
+               message=""):
+    if proxy_host:
+        socks.setdefaultproxy(socks.HTTP,proxy_host,proxy_port)
+        socks.wrapmodule(smtplib)
+    server = smtplib.SMTP(host=smtp_host, port=smtp_port)
+    
+    context = smtplib.ssl.create_default_context()
+    with smtplib.SMTP_SSL(host=smtp_host, port=smtp_port,context=context) as server:
+        try:
+            if From_password:
+                server.login(From, From_password)
+        except Exception as e:
+            print(e)
+            return
+        
+        msg = MIMEMultipart('alternative')
+        # setup the values of the message
+        msg['From']    = From
+        
+        if isinstance(To,list):
+            To = ",".join(To)
+            
+        msg['To']      = To
+        
+        if CC:
+            msg['CC']  = CC
+            
+        msg['Subject'] = "This is TEST Email"             
+
+        # add in the message body
+        msg.attach(MIMEText(message, 'html'))
+        
+        try:
+            server.send_message(msg)
+            return 0
+        except Exception as e:
+            print(e)
+            return
