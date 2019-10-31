@@ -7,6 +7,23 @@ import smtplib
 import socks
 from email.mime.multipart import MIMEMultipart
 
+@retry(stop_max_attempt_number=10,wait_random_min=2000, wait_random_max=4000)
+def pull_weather_data(date, time_period='hourly',Latitude=24.45,Longitude=-77.02):
+    # # Download historical weather data from darksky API
+    URL = 'https://api.darksky.net/forecast/3d1e546c23352becea2d541117e7c924/{},{},{}'
+    
+    link = URL.format(Latitude,Longitude,int(date.timestamp()))
+    try:
+        req = request.urlopen(link)
+        req_json = json.loads(req.read())
+        req_data = req_json[time_period]['data'] 
+        df = pd.DataFrame.from_dict(req_data)
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        return df
+    except Exception as e:
+        print(e)
+        return
+
 def mean_absolute_percentage_error(y_true, y_pred): 
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
