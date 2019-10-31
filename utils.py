@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 @retry(stop_max_attempt_number=10,wait_random_min=2000, wait_random_max=4000)
 def pull_weather_data(date, time_period='hourly',Latitude=24.45,Longitude=-77.02):
     # # Download historical weather data from darksky API
-    URL = 'https://api.darksky.net/forecast/3d1e546c23352becea2d541117e7c924/{},{},{}'
+    URL = 'https://api.darksky.net/forecast/<API-KEY-VALUE>/{},{},{}'
     
     link = URL.format(Latitude,Longitude,int(date.timestamp()))
     try:
