@@ -64,17 +64,57 @@ def get_model_variable_sensitivity(model,inData,column,colLocalizedValue=None):
     sensitivity = (MeanTargetPredictionNew-MeanTargetPredictionOrig)/colshiftrange
     return ("continuous",sensitivity)
     
-def CompileCSVs(datadir,filenameprefix):
+def CompileCSVs(datadir,filenameprefix,encoding="utf-8",datetime_col=None,datetime_format=None,
+                datettime_cutoff=None,keep_disk_copy=True):
     """
-    Read the set of files which have filenameprefix under the folder datadir
+    Read the set of files which have filenameprefix under the folder datadir.
+    This also creates a backup zipped file and copy pastes the files read into it.
+    Apart from the backup that is creates, it also creates one compiled file for future iteration
+    
+    datetime_col and datetime_format would be used to filter out the data 
+    and only keep the latest data as per the Cutoff data
     """
-    fileNames = glob.glob(os.path.join(datadir,filenameprefix+"*"))
+    BackupZipFile = os.path.join(datadir,"Backup.zip")
+    #defining filehandle with the function specific scope
+    filehandle = []
+    if os.path.exists(BackupZipFile) == False:
+        filehandle = zipfile.ZipFile(BackupZipFile,
+                                     mode="x",
+                                     compression=zipfile.ZIP_DEFLATED,
+                                     compresslevel=9)
+    else:
+        filehandle = zipfile.ZipFile(BackupZipFile,
+                                     mode="a")
+    
+    fileNames = glob.glob(os.path.join(datadir,filenameprefix+"*.csv"))
     outData = pd.DataFrame()
     for file in fileNames:
-        inData = pd.read_csv(file,low_memory=False)
-        outData = pd.concat([outData,inData],axis=0,sort=False,ignore_index=True)
-        print(file,inData.shape)
-        outData = outData.drop_duplicates()
+        try:
+            inData = pd.read_csv(file,low_memory=False,encoding=encoding)
+            outData = pd.concat([outData,inData],axis=0,sort=False,ignore_index=True).drop_duplicates()
+            print(file,inData.shape)
+            #Not backing up the compiled files
+            if "%s_Compiled_"%(filenameprefix) not in os.path.basename(file):
+                filehandle.write(filename=file,
+                                 arcname=os.path.basename(file))
+            os.remove(file)
+            
+        except Exception as e:
+            print("Caught Error in reading file %s: %s"%(file,e))
+    
+    filehandle.close()
+    
+    if datettime_cutoff is None:
+        datettime_cutoff = DATECUTOFF
+    if datetime_col:
+        filterSeries = pd.to_datetime(outData[datetime_col],format = datetime_format) >= datettime_cutoff
+        outData = outData[filterSeries]
+        print("Filtered old data and rows dropped from %d to %d."%(filterSeries.shape[0],outData.shape[0]))
+    if keep_disk_copy:
+        compliedDataFilename = os.path.join(datadir,filenameprefix) \
+                                            + pd.Timestamp.now().strftime("_Compiled_%Y-%m-%d %H%M%S.csv")
+        
+        outData.to_csv(compliedDataFilename,index=False)
     return outData.copy()
 
 def ConnectSQLserver(connectionProperty=None):
@@ -154,8 +194,12 @@ def milliseconds_to_datetime(milliseconds):
     #2019-08-02 18:11:46
     return datetimeObj.strftime("%Y-%m-%d %H:%M:%S")
 
-def convert_df_to_html(df):
-    return str(df.to_html(col_space=8,justify="center",na_rep = "", float_format=lambda x: "%.2f"%x))
+def convert_df_to_html(df,float_format=None):
+    if float_format:
+        return str(df.to_html(col_space=8,justify="center",na_rep = "-", float_format=float_format))
+    
+    return str(df.to_html(col_space=8,justify="center",na_rep = "-", float_format=lambda x: "%.0f"%x))
+
 
 @retry(stop_max_attempt_number=5,wait_random_min=2000, wait_random_max=4000)
 def send_email(smtp_host = 'smtp.gmail.com',
@@ -170,7 +214,7 @@ def send_email(smtp_host = 'smtp.gmail.com',
     if proxy_host:
         socks.setdefaultproxy(socks.HTTP,proxy_host,proxy_port)
         socks.wrapmodule(smtplib)
-    server = smtplib.SMTP(host=smtp_host, port=smtp_port)
+    #server = smtplib.SMTP(host=smtp_host, port=smtp_port)
     
     context = smtplib.ssl.create_default_context()
     with smtplib.SMTP_SSL(host=smtp_host, port=smtp_port,context=context) as server:
@@ -193,7 +237,7 @@ def send_email(smtp_host = 'smtp.gmail.com',
         if CC:
             msg['CC']  = CC
             
-        msg['Subject'] = "This is TEST Email"             
+        msg['Subject'] = "This is a TEST Email"             
 
         # add in the message body
         msg.attach(MIMEText(message, 'html'))
@@ -204,3 +248,16 @@ def send_email(smtp_host = 'smtp.gmail.com',
         except Exception as e:
             print(e)
             return
+        
+class TicTocTimer(object):
+    def __init__(self, name=None):
+        self.name = name
+
+    def __enter__(self):
+        self.tstart = datetime.datetime.now()
+
+    def __exit__(self, type, value, traceback):
+        if self.name:
+            print('[%s]' % self.name,)
+        seconds=(datetime.datetime.now() - self.tstart).total_seconds()
+        print('Elapsed: %s seconds' %seconds)
