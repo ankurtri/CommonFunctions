@@ -211,6 +211,13 @@ def milliseconds_to_datetime(milliseconds):
     #2019-08-02 18:11:46
     return datetimeObj.strftime("%Y-%m-%d %H:%M:%S")
 
+def milliseconds_to_pandas_timestamp(string_second):
+    try:
+        return pd.Timestamp(int(string_second),unit="s")
+    except Exception as error:
+        print(string_second,error)
+        return pd.NaT
+
 def convert_df_to_html(df,float_format=None):
     if float_format:
         return str(df.to_html(col_space=8,justify="center",na_rep = "-", float_format=float_format))
