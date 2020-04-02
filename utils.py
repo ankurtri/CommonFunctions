@@ -285,3 +285,49 @@ class TicTocTimer(object):
             print('[%s]' % self.name,)
         seconds=(datetime.datetime.now() - self.tstart).total_seconds()
         print('Elapsed: %s seconds' %seconds)
+        
+def get_common_cols(x,y):
+    return [i for i in x.columns if i in y.columns]
+
+
+def get_numeric(string_val):
+    try:
+        return float(string_val)
+    except:
+        return np.NaN
+
+
+def create_timestamp_from_epoch_seconds(string_second):
+    try:
+        return pd.Timestamp(int(string_second),unit="s")
+    except Exception as error:
+        print(string_second,error)
+        return pd.NaT
+
+
+def get_coltype(obj):
+    import datetime
+    if isinstance(obj,int):
+        return 'INTEGER'    
+    if isinstance(obj,float):
+        return 'FLOAT'
+    if isinstance(obj,str):
+        return 'STRING'
+    if isinstance(obj,datetime.datetime):
+        return 'timestamp'
+    if isinstance(obj,datetime.time):
+        return 'time'
+    if isinstance(obj,bool):
+        return 'BOOLEAN'
+    return 'UNKNOWN:{}'.format(type(obj))
+
+
+def parallelize_dataframe(df, func, n_jobs=-1):
+    if n_jobs==-1:
+        n_jobs = cpu_count()
+    df_split = np.array_split(df, n_jobs)
+    pool = Pool(n_jobs)
+    df = pd.concat(pool.map(func, df_split))
+    pool.close()
+    pool.join()
+    return df
