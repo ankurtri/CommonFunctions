@@ -6,7 +6,18 @@ import pyodbc
 import smtplib
 import socks
 from email.mime.multipart import MIMEMultipart
+import os
+import glob
 
+def sas_to_csv():
+    fileLists = glob.glob("*.sas7bdat")
+
+    for filename in fileLists:
+        print("Working with file:%s"%filename)
+        sasData = pd.read_sas(filename)
+        sasData.to_csv(filename.replace("sas7bdat","csv"),index=False)
+        del sasData
+    
 @retry(stop_max_attempt_number=10,wait_random_min=2000, wait_random_max=4000)
 def pull_weather_data(date, time_period='hourly',Latitude=24.45,Longitude=-77.02):
     # # Download historical weather data from darksky API
