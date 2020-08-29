@@ -11,6 +11,13 @@ import glob
 
 from dateutil.parser import parse
 
+
+def SQL_INSERT_STATEMENT_FROM_DATAFRAME(SOURCE, TARGET):
+    sql_texts = []
+    for index, row in SOURCE.iterrows():       
+        sql_texts.append('INSERT INTO '+TARGET+' ('+ str(', '.join(SOURCE.columns))+ ') VALUES '+ str(tuple(row.values))+";")        
+    return "\n".join(sql_texts)
+
 def is_date(string, fuzzy=False):
     """
     Return whether the string can be interpreted as a date.
